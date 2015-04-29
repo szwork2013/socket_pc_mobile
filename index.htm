@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>pc端</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<link href="http://cdn.bootcss.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="http://www.bootcdn.cn/assets/css/site.min.css">
+<style>
+body{background-color: #27ae60;}
+svg {width: 28px;height: 28px;stroke: #fff;fill: #fff;}
+html|* > svg {-webkit-transform-origin: 50% 50% 0px;}
+#package-amount{width: 200px;margin: 0 auto;}
+#package-amount img{width: 100%;}
+</style>
+
+
+<div class="site-header jumbotron">	
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<h1 id="minh">
+				<svg viewBox="0 0 64 64"><g stroke-width="0"><circle cx="24" cy="0" transform="translate(32,32)" r="3.3463"><animate attributeName="r" dur="750ms" values="8;7;6;5;4;3;2;1;8" repeatCount="indefinite"></animate></circle><circle cx="16.970562748477143" cy="16.97056274847714" transform="translate(32,32)" r="4.3463"><animate attributeName="r" dur="750ms" values="1;8;7;6;5;4;3;2;1" repeatCount="indefinite"></animate></circle><circle cx="1.4695761589768238e-15" cy="24" transform="translate(32,32)" r="5.3463"><animate attributeName="r" dur="750ms" values="2;1;8;7;6;5;4;3;2" repeatCount="indefinite"></animate></circle><circle cx="-16.97056274847714" cy="16.970562748477143" transform="translate(32,32)" r="6.3463"><animate attributeName="r" dur="750ms" values="3;2;1;8;7;6;5;4;3" repeatCount="indefinite"></animate></circle><circle cx="-24" cy="2.9391523179536475e-15" transform="translate(32,32)" r="7.3463"><animate attributeName="r" dur="750ms" values="4;3;2;1;8;7;6;5;4" repeatCount="indefinite"></animate></circle><circle cx="-16.970562748477143" cy="-16.97056274847714" transform="translate(32,32)" r="5.57587"><animate attributeName="r" dur="750ms" values="5;4;3;2;1;8;7;6;5" repeatCount="indefinite"></animate></circle><circle cx="-4.408728476930472e-15" cy="-24" transform="translate(32,32)" r="1.3463"><animate attributeName="r" dur="750ms" values="6;5;4;3;2;1;8;7;6" repeatCount="indefinite"></animate></circle><circle cx="16.970562748477136" cy="-16.970562748477143" transform="translate(32,32)" r="2.3463"><animate attributeName="r" dur="750ms" values="7;6;5;4;3;2;1;8;7" repeatCount="indefinite"></animate></circle></g></svg>
+				二维码加载中</h1>
+				<p>移动／PC双端互动测试<br><span id="test_url"></span>	</p>
+				<p id="package-amount">
+				</p>
+				<p id="result"></p>
+				<div class="form-group">
+					<input type="text" id="navigator" class="form-control search clearable" placeholder="移动端的navigator获取框">
+				</div>
+				<p>寻找符合条件：iphone ，且iOS版本为8及其以上的机器。<a target="_blank" href="http://act.dsm.sdo.com/testflight/index.html">http://act.dsm.sdo.com/testflight/index.html</a></p>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+ var socket = io.connect('http://socket-pc-mobile.codingapp.com/',{'force new connection': true});
+
+
+socket.on("connect", function(){
+	//发送标示
+    socket.emit("PConline");
+});
+//获取PC用户socket ID
+socket.on("PCId",function(data){
+	token=data;
+	console.log(data);
+	var img = new Image();// 创建一个image对象
+    img.src = "http://qr.liantu.com/api.php?text=http://socket-pc-mobile.codingapp.com/m/?"+data;       // 指定img的src属性
+    img.id = "code";// 指定img的id
+ 
+    img.onload = function(){
+      	var i=document.getElementById("package-amount");
+      	i.innerHTML="";
+        i.appendChild(img);
+ 		document.getElementById("minh").innerHTML="扫描二维码";
+ 		document.getElementById("test_url").innerHTML="对应移动端地址：<a href=http://socket-pc-mobile.codingapp.com/m/?"+data+" target=_blank>http://socket-pc-mobile.codingapp.com/m/?"+data+"</a>";
+        
+    }
+});
+socket.on("Scan",function(data){//扫描成功隐藏二维码
+	document.getElementById("test_url").innerHTML="";
+    document.getElementById("package-amount").innerHTML="";
+    	
+});
+
+socket.on("GetNavigator",function(data){ //拿到对应移动端 navigator
+	console.log(data);
+	document.getElementById("navigator").value =data.msg;
+	checkiOS(data.msg) ? ( checkiOS8(data.msg) ? ( data.h===480 ? document.getElementById("result").innerHTML="iPhone4/iPhone4s符合但不推荐"  : document.getElementById("result").innerHTML="设备符合条件:"+iphone(data.h) ) : document.getElementById("result").innerHTML="系统版本太低，需要iOS8及其以上系统" ): document.getElementById("result").innerHTML="不是苹果移动设备";
+
+
+});
+
+function checkiOS(data) {
+
+    var isiOS= data.match(/iphone|iPad/i) != null;
+    if (isiOS) {
+        return true;
+    }
+    return false;
+}
+function checkiOS8(data) {
+    var isiOS8= data.match(/OS 8_\d[_\d]* like Mac OS X/i) != null;
+    if (isiOS8) {
+        return true;
+    }
+    return false;
+}
+function iphone(data){
+	switch(data){
+		// case 480: 
+		// 	return "iPhone4/iPhone4s"; 
+		case 568: 
+			return "iPhone5/iPhone5c/iPhone5s";
+		case 667: 
+			return "iPhone6";
+		case 736: 
+			return "iPhone6p";
+	}
+}
+</script>
+</body>
+</html>
